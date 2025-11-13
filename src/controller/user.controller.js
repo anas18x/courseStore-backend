@@ -2,7 +2,8 @@ import { User } from "../models/User.models.js"
 import bcrypt from "bcrypt"
 import { ENV } from "../config/ENV.config.js"
 import jwt from "jsonwebtoken"
-
+import { signUpService } from "../service/auth.service.js"
+import { signInService } from "../service/auth.service.js"
 
 /**
  * User SignUp Controller
@@ -30,19 +31,13 @@ export async function UserSignUp(req, res) {
   const { userName, email, password, role } = req.validatedData
 
   try {
-    const encryptedPassword = await bcrypt.hash(password, 5)
-    await User.create({
-      userName: userName,
-      email: email,
-      password: encryptedPassword,
-      role: role,
-    })
-    res.status(200).json({
-        msg:"Signed up"
+    await signUpService(userName,email,password,role)
+    return res.status(200).json({
+        msg:"signed up"
     })
   } catch (error) {
-    res.status(409).json({
-      msg: "user already exists",
+    return res.status(500).json({
+        msg:"user already exists"
     })
   }
 }
@@ -87,29 +82,23 @@ export async function UserSignIn(req, res) {
 
   try{
 
-    const findUser = await User.findOne({email})
-    if(!findUser){
-    return res.status(403).json({msg:"user doesnt exists"})
-  }
-
-  const passwordMatched = await bcrypt.compare(password,findUser.password)
-
-  if(passwordMatched){
-    const token =  jwt.sign({
-        id: findUser._id,
-    },ENV.JWT_SECRET)
-    console.log(token)
-    res.status(200).json({
-       token
-    })
-  } else {
-    res.status(401).json({
-        msg:"invaid credentials"
-    })
-  }
-
+    const token = await signInService(email,password)
+    return res.status(200).json({token})
+   
   } catch (error) {
-    return res.status(401).json({
+    if(error.message === "user not found"){
+        return res.status(401).json({
+            msg:"user not found"
+        })
+    }
+
+    if(error.message === "invalid credentials"){
+        return res.status(401).json({
+            msg:"invalid credentials"
+        })
+    }
+
+    return res.status(500).json({
         msg:"something went wrong"
     })
   }
