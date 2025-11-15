@@ -47,8 +47,21 @@ export const signInService = async (email, password) => {
 
 
 export const logOutService = async (userId) => {
-
     await UserModel.User.findByIdAndUpdate(userId, {refreshToken: null})  
 }
 
 
+
+
+export const refreshTokenService = async (refreshToken) => {
+    const decoded = jwt.verify(refreshToken, ENV.JWT_SECRET)
+    const user = await UserModel.User.findOne({ _id: decoded.userId})
+    if(!user){
+        throw new AppError("user does not exist", StatusCodes.UNAUTHORIZED);
+    }
+
+    if(user.refreshToken !== refreshToken){
+        throw new AppError("invalid refresh token", StatusCodes.UNAUTHORIZED);
+    }
+    return decoded
+}

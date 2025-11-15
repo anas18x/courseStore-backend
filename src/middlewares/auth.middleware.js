@@ -6,11 +6,11 @@ import AppError from "../utils/error/AppError.js";
 
 
 export const verifyToken = (req,res,next) => {
-   const token = req.headers.token;
-   if(!token) ErrorResponse(res, "token missing", StatusCodes.UNAUTHORIZED);
+   const accessToken = req.headers['accesstoken']
+   if(!accessToken) ErrorResponse(res, "token missing", StatusCodes.UNAUTHORIZED);
 
     try{
-       const JWTverification = jwt.verify(token,ENV.JWT_SECRET) 
+       const JWTverification = jwt.verify(accessToken,ENV.JWT_SECRET) 
        req.token =  JWTverification
        next()
     } catch (error){

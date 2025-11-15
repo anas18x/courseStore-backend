@@ -2,6 +2,7 @@ import { ErrorResponse, SuccessResponse } from "../utils/common/responseHandler.
 import { StatusCodes } from "http-status-codes"
 import  AppError from "../utils/error/AppError.js"
 import { Auth } from "../service/index.js"
+import { generateRefreshToken } from "../utils/common/generateToken.js"
 
 /**
  * User SignUp Controller
@@ -76,7 +77,13 @@ export async function UserSignIn(req, res) {
 
   try{
     const tokens = await Auth.signInService(email,password)
-    SuccessResponse(res,{tokens},"logged in successfully",StatusCodes.OK)
+    const{accessToken, refreshToken} = tokens
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "Strict",
+    });
+    SuccessResponse(res,{accessToken},"logged in successfully",StatusCodes.OK)
 
   } catch (error) {
      throw new AppError(error.message, error.statusCode);  
@@ -89,8 +96,26 @@ export async function UserLogOut(req,res){
   const userId = req.token.userId
   try {
     await Auth.logOutService(userId)
+    res.clearCookie("refreshToken");
     SuccessResponse(res,null,"logged out successfully",StatusCodes.OK)
   } catch (error) {
     throw new AppError("could not logout", StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+}
+
+
+
+export async function RefreshAccessToken(req,res){
+  const refreshToken = req.cookies.refreshToken;
+  if(!refreshToken){
+    return ErrorResponse(res, "refresh token missing", StatusCodes.UNAUTHORIZED);
+  }
+  
+  try {
+    const decoded = await Auth.refreshTokenService(refreshToken)
+    const newAccessToken = generateRefreshToken({userId: decoded.userId, role: decoded.role}, ENV.JWT_SECRET)
+    SuccessResponse(res, {newAccessToken}, "new access token generated", StatusCodes.OK)
+  } catch (error) {
+    ErrorResponse(res, error.message, error.statusCode);
   }
 }

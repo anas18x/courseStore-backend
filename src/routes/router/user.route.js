@@ -12,5 +12,7 @@ userRouter.post("/signin", InputValidatorMiddleware.SignIninputValidator, UserCo
 
 userRouter.post("/logout", AuthMiddleware.verifyToken, UserController.UserLogOut)
 
+userRouter.post("/refresh-token", UserController.RefreshAccessToken)
 
 export default userRouter
+

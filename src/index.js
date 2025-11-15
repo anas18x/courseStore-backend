@@ -4,9 +4,11 @@ import { ENV } from "./config/ENV.config.js";
 import _ from "./db.js"
 import { ErrorMiddleware } from "./middlewares/index.js";
 import APIRoutes from "./routes/index.js";
+import cookieParser from "cookie-parser";
 
 
 app.use(express.json())
+app.use(cookieParser())
 
 app.use("/api", APIRoutes)
 
