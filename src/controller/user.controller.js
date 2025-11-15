@@ -75,11 +75,22 @@ export async function UserSignIn(req, res) {
   const { email, password} = req.validatedData
 
   try{
+    const tokens = await Auth.signInService(email,password)
+    SuccessResponse(res,{tokens},"logged in successfully",StatusCodes.OK)
 
-    const token = await Auth.signInService(email,password)
-    SuccessResponse(res,{token},"logged in successfully",StatusCodes.OK)
-   
   } catch (error) {
      throw new AppError(error.message, error.statusCode);  
   }  
+}
+
+
+
+export async function UserLogOut(req,res){
+  const userId = req.token.userId
+  try {
+    await Auth.logOutService(userId)
+    SuccessResponse(res,null,"logged out successfully",StatusCodes.OK)
+  } catch (error) {
+    throw new AppError("could not logout", StatusCodes.INTERNAL_SERVER_ERROR);
+  }
 }

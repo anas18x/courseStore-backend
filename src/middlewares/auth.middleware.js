@@ -4,15 +4,19 @@ import { ErrorResponse, SuccessResponse } from "../utils/common/responseHandler.
 import { StatusCodes } from "http-status-codes";
 import AppError from "../utils/error/AppError.js";
 
-const tokenIsValid = (req,res,next) => {
+
+export const verifyToken = (req,res,next) => {
    const token = req.headers.token;
-   if(!token) return res.status(401).json({msg:"no token provided"})
-   
+   if(!token) ErrorResponse(res, "token missing", StatusCodes.UNAUTHORIZED);
+
     try{
-        const JWTverification = jwt.verify(token,ENV.JWT_SECRET) 
-        req.token =  JWTverification.id
-        next()
+       const JWTverification = jwt.verify(token,ENV.JWT_SECRET) 
+       req.token =  JWTverification
+       next()
     } catch (error){
        throw new AppError("invalid token", StatusCodes.UNAUTHORIZED);
     }
 }
+
+
+
